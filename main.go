@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -19,7 +20,8 @@ func init() {
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
-	r.HandleFunc("/new", newHandler)
+	r.HandleFunc("/contacts/new", newHandler)
+	r.HandleFunc("/contacts", createHandler).Methods("POST")
 
 	port := ":8080"
 	fmt.Printf("Serving from port %s", port)
@@ -34,4 +36,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 func newHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	new.ExecuteTemplate(w, "layout", "")
+}
+
+func createHandler(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintf(w, string(body))
 }
