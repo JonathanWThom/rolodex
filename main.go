@@ -9,14 +9,17 @@ import (
 )
 
 var index *template.Template
+var new *template.Template
 
 func init() {
-	index = template.Must(template.ParseFiles("index.html"))
+	index = template.Must(template.ParseFiles("index.html", "layout.html"))
+	new = template.Must(template.ParseFiles("new.html", "layout.html"))
 }
 
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
+	r.HandleFunc("/new", newHandler)
 
 	port := ":8080"
 	fmt.Printf("Serving from port %s", port)
@@ -25,5 +28,10 @@ func main() {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	index.Execute(w, nil)
+	index.ExecuteTemplate(w, "layout", "")
+}
+
+func newHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	new.ExecuteTemplate(w, "layout", "")
 }
