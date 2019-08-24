@@ -27,8 +27,9 @@ func init() {
 }
 
 func main() {
-	db, err = gorm.Open("postgres", "port=5432 user=postgres dbname=rolodex_development")
+	db, err = gorm.Open("postgres", "postgresql://postgres:postgres@db/rolodex_development?sslmode=disable")
 	if err != nil {
+		fmt.Println(err)
 		panic("failed to connect database")
 	}
 	defer db.Close()
