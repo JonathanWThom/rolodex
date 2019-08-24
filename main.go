@@ -6,7 +6,6 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -14,6 +13,7 @@ import (
 var index *template.Template
 var new *template.Template
 var db *gorm.DB
+var err error
 
 type Contact struct {
 	gorm.Model
@@ -27,13 +27,12 @@ func init() {
 }
 
 func main() {
-	db, err := gorm.Open("postgres", "port=5432 user=postgres dbname=rolodex_development")
+	db, err = gorm.Open("postgres", "port=5432 user=postgres dbname=rolodex_development")
 	if err != nil {
 		panic("failed to connect database")
 	}
 	defer db.Close()
 	db.AutoMigrate(&Contact{})
-	db.Create(&Contact{FirstName: "Jonathan", LastName: "Thom"})
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
@@ -56,9 +55,18 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal(err)
+	r.ParseForm()
+	contact := &Contact{FirstName: r.FormValue("firstname"), LastName: r.FormValue("lastname")}
+	errors := db.Create(contact).GetErrors()
+	if len(errors) != 0 {
+		var msg string
+		for i := 0; i < len(errors); i++ {
+			msg += fmt.Sprintf("%s\n", errors[i].Error())
+		}
+
+		http.Error(w, msg, http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(fmt.Sprintf("%v", contact)))
 	}
-	fmt.Fprintf(w, string(body))
 }
