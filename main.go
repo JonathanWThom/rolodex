@@ -22,12 +22,13 @@ type Contact struct {
 }
 
 func init() {
-	index = template.Must(template.ParseFiles("index.html", "layout.html"))
+	index = template.Must(template.ParseFiles("message.html", "index.html", "layout.html"))
 	new = template.Must(template.ParseFiles("new.html", "layout.html"))
 }
 
 func main() {
-	db, err = gorm.Open("postgres", "postgresql://postgres:postgres@db/rolodex_development?sslmode=disable")
+	// "postgresql://postgres:postgres@db/rolodex_development?sslmode=disable"
+	db, err = gorm.Open("postgres", "port=5432 user=postgres dbname=rolodex_development")
 	if err != nil {
 		fmt.Println(err)
 		panic("failed to connect database")
@@ -68,6 +69,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusInternalServerError)
 	} else {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(fmt.Sprintf("%v", contact)))
+		msg := fmt.Sprintf("%s %s successfully added to Rolodex.", contact.FirstName, contact.LastName)
+		index.ExecuteTemplate(w, "layout", msg)
 	}
 }
